@@ -5,12 +5,9 @@
 	<runtime xdt:Transform="InsertIfMissing">	
 			<assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1"
 			xdt:Transform="InsertIfMissing">
-			<appSettings  xdt:Transform="InsertIfMissing">
 			
 				<probing  xdt:Transform="InsertIfMissing" 
 				privatePath="lib;libs" />
-				
-			</appSettings>
 			
 			</assemblyBinding>		
 	</runtime>	

@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>PrettyBin</id>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <authors>Andrey Ershov</authors>
     <owners>aershov</owners>
     <!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
