@@ -5,7 +5,7 @@ Try
 {
 	 $path = $project.FullName
      Write-Host 'Install PrettifyBin; '
-     [ xml ]$doc =  [ xml ](Get-Content $path)
+     [xml]$doc =  [xml](Get-Content $path)
 
 
     # If a Namespace URI was not given, use the Xml document's default namespace.
