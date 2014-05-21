@@ -2,14 +2,14 @@
 <package>
   <metadata>
     <id>PrettyBin</id>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <authors>Andrey Ershov</authors>
     <owners>aershov</owners>
     <!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
     <projectUrl>https://github.com/slmjy/PrettyBin</projectUrl>
     <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Moves dll,pdb and xml in bin/lib subfolder and ensures, that everything works.</description>
+    <description>Makes your bin folder simple! Moves dll,pdb and xml in bin/lib subfolder and ensures, that everything works.</description>
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2014</copyright>
     <tags>PrettyBin</tags>
