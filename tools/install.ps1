@@ -66,6 +66,64 @@ Try
     $MoveNode.SetAttribute("OverwriteReadOnlyFiles","true")
 
     $doc.Save($path)
+	
+	#  ============        This script attemps to Edit this tags in App.config: ========
+    #
+	# <configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+	#		<runtime>	
+	#			<assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+	#				<probing privatePath="lib;libs" />		
+	#			</assemblyBinding>		
+	#		</runtime>
+	# </configuration>
+	
+	# TODO: Получение $app = App.config. 
+	
+	# Добавление секции configuration
+	# Какое мне нужно неймспейс, ns? Что делает xmlNsManager?
+	$configurationNode =  $app.SelectSingleNode("//ns:configuration", $xmlNsManager)
+	 
+    if ($configurationNode   -eq $null)
+	{
+        Write-Host 'No Configuration Node. Creating'
+		# Для чего тут нужен NamespaceURI
+		$configurationNode = $doc.CreateElement('Configuration', $NamespaceURI )
+        $configurationNode.SetAttribute("xmlns:xdt" ,"http://schemas.microsoft.com/XML-Document-Transform")
+		$app.AppendChild($configurationNode) 
+	}
+	
+	# Добавление runtime
+	$runtimeNode =  $configurationNode.SelectSingleNode("//ns:runtime", $xmlNsManager)
+	 
+    if ($runtimeNode   -eq $null)
+	{
+        Write-Host 'No runtime Node. Creating'
+		$runtimeNode = $doc.CreateElement('runtime', $NamespaceURI )
+		$configurationNode.AppendChild($runtimeNode) 
+	}
+	
+	# Добавление assemblyBinding
+	$assemblyBindingNode =  $runtimeNode.SelectSingleNode("//ns:assemblyBinding", $xmlNsManager)
+	 
+    if ($assemblyBindingNode   -eq $null)
+	{
+        Write-Host 'No assemblyBinding Node. Creating'
+		$assemblyBindingNode = $doc.CreateElement('assemblyBinding', $NamespaceURI )
+		$runtimeNode.AppendChild($assemblyBindingNode) 
+	}
+	$assemblyBindingNode.SetAttribute("xmlns" ,"urn:schemas-microsoft-com:asm.v1")
+	
+	# Добавление probing
+	$probingNode =  $assemblyBindingNode.SelectSingleNode("//ns:probing", $xmlNsManager)
+	 
+    if ($probingNode   -eq $null)
+	{
+        Write-Host 'No probing Node. Creating'
+		$probingNode = $doc.CreateElement('probing', $NamespaceURI )
+		$assemblyBindingNode.AppendChild($probingNode) 
+	}
+	$probingNode.SetAttribute("privatePath" ,"lib;libs")
+	
 }
 Catch
 {
