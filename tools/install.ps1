@@ -77,7 +77,12 @@ Try
 	#		</runtime>
 	# </configuration>
 	
-	# TODO: Получение $app = App.config. 
+	# find the Web.config file
+    $configItem = $project.ProjectItems | where {$_.Name -eq "App.config"}
+    # find its path on the file system
+    $configPath= $configItem.Properties | where {$_.Name -eq "LocalPath"}
+    
+    [xml]$app =  [xml](Get-Content $configPath)
 	
 	# Добавление секции configuration
 	# Какое мне нужно неймспейс, ns? Что делает xmlNsManager?
