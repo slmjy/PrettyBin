@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
-
+<!--
 	<runtime xdt:Transform="InsertIfMissing">	
 			<assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1"
 			xdt:Transform="InsertIfMissing">
@@ -11,5 +11,5 @@
 			
 			</assemblyBinding>		
 	</runtime>	
-	
+	-->
 </configuration>
