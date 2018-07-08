@@ -4,7 +4,7 @@ param($installPath, $toolsPath, $package, $project)
 Try
 {
      $path =  $project.FullName
-     Write-Host 'Uninstall PrettifyBin; '
+     Write-Host '[PrettyBin] UNINSTALLING'
      [ xml ]$doc =  [ xml ](Get-Content $path)
 
 

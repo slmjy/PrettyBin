@@ -1,3 +1,3 @@
 param($installPath, $toolsPath, $package, $project)
 
-Write-Host 'Init BinPrettify'
+Write-Verbose '[PrettyBin] INITIALIZING'
