@@ -1,4 +1,12 @@
-function Add-ProbingToAppConfig(
+
+#requires -version 2
+
+function GetXmlNodeChild([parameter(ValueFromPipeline=$true)]$node, $name) {
+    if ($node) {
+        
+    }    
+}
+function Add-PrettyProbingToAppConfig(
     [parameter(Mandatory=$true)][ValidateNotNullOrEmpty()]$appConfigContent, 
     [ValidateNotNullOrEmpty()]$probingSubdirectories = @("lib")) 
 {
@@ -15,9 +23,9 @@ function Add-ProbingToAppConfig(
             </runtime>
         </configuration>
     .EXAMPLE
-    Add-ProbingToAppConfig (get-content 'path to app.config') "lib"
+    Add-PrettyProbingToAppConfig (get-content 'path to app.config') "lib"
     .EXAMPLE
-    Add-ProbingToAppConfig (get-content 'path to app.config') "lib","libs"
+    Add-PrettyProbingToAppConfig (get-content 'path to app.config') "lib","libs"
     .PARAMETER appConfigContent
     Content of App.config, not location. Can be either xml object or convertible to xml
     .PARAMETER probingSubdirectories
@@ -26,71 +34,60 @@ function Add-ProbingToAppConfig(
 
     $app = [xml]$appConfigContent
 
+    $namespace = "appns:"
+
     # If a Namespace URI was not given, use the Xml document's default namespace.
-    $NamespaceAppURI = $app.DocumentElement.NamespaceURI 
+    if (!$NamespaceAppURI) {
+        $NamespaceAppURI = $app.DocumentElement.NamespaceURI 
+    }
+
     # In order for SelectSingleNode() to actually work, we need to use the fully qualified node path along with an Xml Namespace Manager, so set them up.
-    $xmlNsManager.AddNamespace("appns", $NamespaceAppURI)	
+    $xmlNsManager = New-Object System.Xml.XmlNamespaceManager($app.NameTable)
+    $xmlNsManager.AddNamespace("ns2", "urn:schemas-microsoft-com:asm.v1")
+
+    if ($NamespaceAppURI) {
+        $xmlNsManager.AddNamespace("appns", $NamespaceAppURI)
+    } else {
+        $namespace = ""
+        $NamespaceAppURI = $null
+    }    	
+
+    function NewEl($parent, $name) {
+        Write-Host "[PRETTYBIN] New '$name' node under '$($parent.Name)'"
+        $el = if ($NamespaceAppURI) {
+            $app.CreateElement($name, $parent.NamespaceURI )
+        } else {
+            $app.CreateElement($name, $parent.NamespaceURI)
+        }
+
+        $parent.AppendChild($el) | Out-Null
+        return $el
+    }
+
+    function GetOrNewEl($parent, $name) {
+        $el = if ($parent.HasChildNodes) { $parent.ChildNodes | Where-Object { $_.Name -eq $name } | select -first 1 } 
+        if (!$el) { $el = NewEl $parent $name}
+        return $el
+    }
 
     # Adding of configuration section
-    $configurationNode =  $app.SelectSingleNode("//appns:configuration", $xmlNsManager)
-
-    if ($configurationNode   -eq $null)
-    {
-        Write-Host '[PRETTYBIN] No Configuration Node. Creating'
-        $configurationNode = $app.CreateElement('Configuration', $NamespaceAppURI )
-        $configurationNode.SetAttribute("xmlns:xdt" ,"http://schemas.microsoft.com/XML-Document-Transform")
-        $app.AppendChild($configurationNode) 
-    }
+    $configurationNode =  GetOrNewEl  $app 'configuration'
+    $configurationNode.SetAttribute("xmlns:xdt" ,"http://schemas.microsoft.com/XML-Document-Transform")
 
     # Adding of runtime section
-    $runtimeNode =  $configurationNode.SelectSingleNode("//appns:runtime", $xmlNsManager)
-    
-    if ($runtimeNode   -eq $null)
-    {
-        Write-Host '[PRETTYBIN] No runtime Node. Creating'
-        $runtimeNode = $app.CreateElement('runtime', $NamespaceAppURI )
-        $configurationNode.AppendChild($runtimeNode) 
-    }
-
-    # Adding of assemblyBinding section
-    Write-Host '[PRETTYBIN] runtimeNode items'
-    $assemblyBindingNode = $null
-    foreach ($item in $runtimeNode.ChildNodes)
-    {
-        if ($item.Name -eq 'assemblyBinding')
-        {
-            $assemblyBindingNode = $item
-            break
-        }
-    }
-
-    #$assemblyBindingNode =  $runtimeNode.SelectSingleNode("//appns:assemblyBinding", $xmlNsManager)
-    
-    if ($assemblyBindingNode -eq $null)
-    {
-        Write-Host '[PRETTYBIN] No assemblyBinding Node. Creating'
-        $assemblyBindingNode = $app.CreateElement('assemblyBinding', $NamespaceAppURI )
-        $runtimeNode.AppendChild($assemblyBindingNode) 
-    }
+    $runtimeNode =  GetOrNewEl $configurationNode 'runtime'
+    $assemblyBindingNode = GetOrNewEl $runtimeNode 'assemblyBinding'
     $assemblyBindingNode.SetAttribute("xmlns" ,"urn:schemas-microsoft-com:asm.v1")
 
     # Adding of probing section
-    $probingNode =  $assemblyBindingNode.SelectSingleNode("//appns:probing", $xmlNsManager)
-    
-    if ($probingNode -eq $null)
-    {
-        Write-Host '[PRETTYBIN] No probing Node. Creating'
-        $probingNode = $app.CreateElement('probing', $NamespaceAppURI )
-        $assemblyBindingNode.AppendChild($probingNode) 
-    }
-
+    $probingNode = GetOrNewEl $assemblyBindingNode 'probing'
     $probingNode.SetAttribute("privatePath", ($probingSubdirectories -join ";"))
 
     return $app
 }
 
 
-function Add-MSBuildTaskToMoveDependencies(
+function Add-PrettyMSBuildTaskToMoveDependencies(
     [parameter(Mandatory=$true)][ValidateNotNullOrEmpty()]$projectxml, 
     [ValidateNotNullOrEmpty()]$subfolder = "lib") 
 {
@@ -129,23 +126,20 @@ function Add-MSBuildTaskToMoveDependencies(
     #      <Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)lib" OverwriteReadOnlyFiles="true" />
     # </Target>
 
-
-
-
     $targetNode =  $doc.SelectSingleNode("//ns:Project/ns:Target[@Name='AfterBuild']", $xmlNsManager)
 
-    if ($targetNode   -eq $null)
+    if ($null -eq $targetNode)
     {
     Write-Host '[PRETTYBIN] No Target AfterBuild Node. Creating'
-    $targetNode = $doc.CreateElement('Target', $NamespaceURI )
-    $targetNode.SetAttribute("Name" ,"AfterBuild")
-    $doc.Project.AppendChild($targetNode) 
+        $targetNode = $doc.CreateElement('Target', $NamespaceURI )
+        $targetNode.SetAttribute("Name" ,"AfterBuild")
+        $doc.Project.AppendChild($targetNode) 
     }
 
 
     $filesToMoveNode = $targetNode.SelectSingleNode("//ns:ItemGroup/ns:MoveToLibFolder", $xmlNsManager)
 
-    if ($filesToMoveNode -eq $null)
+    if ($null -eq $filesToMoveNode)
     {
     Write-Host '[PRETTYBIN] No ItemGroup whith MoveToLibFolder tag. Creating'
     $itemGroup =  $doc.CreateElement('ItemGroup', $NamespaceURI)        
@@ -159,7 +153,7 @@ function Add-MSBuildTaskToMoveDependencies(
 
 
     $MoveNode = $targetNode.SelectSingleNode('//ns:Move[contains(@SourceFiles,"@(MoveToLibFolder)")]', $xmlNsManager)
-    if ($MoveNode -eq $null)
+    if ($null -eq $MoveNode)
     {
         Write-Host '[PRETTYBIN] No Move tag in AfterBuild Target. Creating'
         $MoveNode = $doc.CreateElement('Move', $NamespaceURI)

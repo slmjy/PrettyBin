@@ -6,16 +6,16 @@ param($installPath, $toolsPath, $package, $project)
 $csprojLocation = $project.FullName
 
 Write-Host '[PRETTYBIN] Searching for App.config'
-$appConfigItem = $project.ProjectItems | ?{$_.Name -eq "App.config"}	
-if ($appConfigItem -eq $null)
-{
-	throw [System.IO.FileNotFoundException] "Project '$csprojLocation' does not have App.config. PrettyBin is for exetutable projects only."
+$appConfigItem = $project.ProjectItems | Where-Object { $_.Name -eq "App.config" }	
+if ($null -eq $appConfigItem) {
+    throw [System.IO.FileNotFoundException] "Project '$csprojLocation' does not have App.config. PrettyBin is for exetutable projects only."
 }
-$configPath = $appConfigItem | %{ $_.Properties } | ?{$_.Name -eq "LocalPath" } | %{ $_.Value }	
+$configPath = $appConfigItem | ForEach-Object { $_.Properties } | Where-Object { $_.Name -eq "LocalPath" } | ForEach-Object { $_.Value }	
 if (!(Test-Path $configPath -PathType Leaf)) {
-	throw [System.IO.FileNotFoundException] "Cannot find app.config file at '$configPath'"
-} else {
-	Write-Host "[PRETTYBIN] App.config found in '$configPath'"
+    throw [System.IO.FileNotFoundException] "Cannot find app.config file at '$configPath'"
+}
+else {
+    Write-Host "[PRETTYBIN] App.config found in '$configPath'"
 }
 
  
@@ -27,7 +27,7 @@ Write-Host '[PrettyBin] Adding AfterBuild MSBUILD task to project file'
 # 	<Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)lib" OverwriteReadOnlyFiles="true" />
 # </Target>
 
-$modifiedCsProj = Add-MSBuildTaskToMoveDependencies (Get-Content $csprojLocation) "lib"
+$modifiedCsProj = Add-PrettyMSBuildTaskToMoveDependencies (Get-Content $csprojLocation) "lib"
 $modifiedCsProj.Save($csprojLocation)
 
 Write-Host '[PrettyBin] Adding Probing tak to App.config'
@@ -39,7 +39,7 @@ Write-Host '[PrettyBin] Adding Probing tak to App.config'
 #		</runtime>
 # </configuration>
 
-$modifiedAppConig = Add-ProbingToAppConfig (Get-Content $configPath) "lib","libs"
+$modifiedAppConig = Add-PrettyProbingToAppConfig (Get-Content $configPath) "lib", "libs"
 $modifiedAppConig.save($configPath)
 
 
