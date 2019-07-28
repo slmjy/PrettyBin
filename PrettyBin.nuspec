@@ -14,4 +14,9 @@
     <copyright>Copyright 2014</copyright>
     <tags>PrettyBin</tags>
   </metadata>  
+
+  <files>
+    <file src="*\**" target="\" exclude="test\**\*.*"/>
+  </files>
+
 </package>
